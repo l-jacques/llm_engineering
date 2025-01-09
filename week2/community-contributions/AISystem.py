@@ -58,26 +58,30 @@ class AISystem:
         self.model = model
         self.messages = []
         self.type = type
-        
-    def call(self, message):
-        self.messages.append(message)
-        toSend = self.messages
-      
+
+    def callWithTools(self, tools): 
         if self.type == AI.CLAUDE:
             message = self.processor.messages.create(
-                model=self.model,
-                system=self.system,
-                messages=self.messages,
-                max_tokens=500
+            model=self.model,
+            system=self.system,
+            messages=self.messages,
+            tools=tools,
+            max_tokens=500
             )
             return message.content[0].text
         else:
-            toSend.insert(0,self.system)
+            self.messages.insert(0,self.system)
             completion = self.processor.chat.completions.create(
-                model=self.model,
-                messages= toSend
+            model = self.model,
+            messages= self.messages,
+            tools=tools
             )
-            return completion.choices[0].message.content
+        return completion.choices[0]
+    def call(self, message, tools = []):
+        self.messages.append(message)
+        toSend = self.messages
+      
+        return self.callWithTools(tools)
 
     def stream(self, message, usingGradio=False):
         self.messages.append(message)
